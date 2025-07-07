@@ -1,10 +1,8 @@
 import psycopg2
-import os
-from datetime import datetime
-import pandas as pd
 from psycopg2.extras import execute_values
-import shutil
-from datetime import datetime
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 # ---db configurations---
 DB_PARAMS = {
@@ -63,7 +61,7 @@ def main():
     try:
         #create connection
         conn = connection(DB_PARAMS)
-        print("Connection to DB Successfull")
+        logging.info("Connection to DB Successfull")
 
         #create table if not exists
         create_table(conn)
@@ -74,7 +72,7 @@ def main():
         #get record count
         count = count_records(conn)
 
-        print(f"Count of aggregated records : {count}")
+        logging.info(f"Count of aggregated records : {count}")
         
     finally:
         if conn:

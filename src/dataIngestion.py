@@ -1,11 +1,12 @@
 import psycopg2
 import os
 from datetime import datetime
-import pandas as pd
 from psycopg2.extras import execute_values
 import shutil
 from datetime import datetime
 import logging
+
+logging.basicConfig(level=logging.INFO)
 
 # ---- DB Config ----
 DB_PARAMS = {
@@ -47,10 +48,11 @@ def extract_data(fileName, filePath):
                 rows.append((station_id, date, max_temp.strip(), min_temp.strip(), precipitation.strip()))
             except Exception as e:
                 count_row_not_processed += 1
-                print(f"failed to process row : {line.strip()} in file {file_path} - {e}")
+                logging.info(f"failed to process row : {line.strip()} in file {file_path} - {e}")
 
     return rows, count_row_not_processed
 
+#create the weather table if does not exist already
 def create_table(conn):
     with conn.cursor() as cur:
         cur.execute("""
@@ -65,6 +67,7 @@ def create_table(conn):
         """)
         conn.commit()
 
+#perform insertion of rows into table for each file in wx_data directory
 def bulk_insert(conn, rows):
 
     before_inserting = count_records(conn)
@@ -81,6 +84,7 @@ def bulk_insert(conn, rows):
 
     return after_inserting - before_inserting
 
+#count total records in the table
 def count_records(conn):
     count = """
         SELECT COUNT(*) from weather;
@@ -93,6 +97,7 @@ def count_records(conn):
 
 #archive file
 def archive_file(fileName, source_dir, archive_dir):
+
     # Create archive folder if it doesn't exist
     if not os.path.exists(archive_dir):
         os.makedirs(archive_dir)  
@@ -100,8 +105,9 @@ def archive_file(fileName, source_dir, archive_dir):
     file_path = os.path.join(source_dir, fileName)
     archive_path = os.path.join(archive_dir, fileName)
 
+    #move file to archive folder to avoid loading duplicate rows into tables
     shutil.move(file_path, archive_path)
-    print(f"{fileName} moved file to archive directory")
+    logging.info(f"{fileName} moved file to archive directory")
 
 
 def connection(DB_PARAMS):
@@ -112,11 +118,11 @@ def main():
     try:
         #process start
         start_time = datetime.now()
-        print(f"Start Time : {start_time}")
+        logging.info(f"Start Time : {start_time}")
 
         #create connection
         conn = connection(DB_PARAMS)
-        print("Connection to DB Successfull")
+        logging.info("Connection to DB Successfull")
 
         #create table if not exists
         create_table(conn)
@@ -132,30 +138,30 @@ def main():
             #extract and transform data
             try:
                 rows, count_of_bad_records = extract_data(file, wx_data)
-                print(f"File {file} having rows {len(rows)} being processed..")
+                logging.info(f"File {file} having rows {len(rows)} being processed..")
                 if(count_of_bad_records > 0):
-                    print(f"File {file} had {count_of_bad_records} bad records, successfully ignored")
+                    logging.info(f"File {file} had {count_of_bad_records} bad records, successfully ignored")
 
                 total_rows += len(rows)
 
                 insertion_count = bulk_insert(conn, rows)
-                print(f"{insertion_count} rows inserted from file {file}")
+                logging.info(f"{insertion_count} rows inserted from file {file}")
 
                 archive_file(file, wx_data, archive_dir)
                 
             except Exception as e:
-                print(f"Exception occured while processing file {file} : ", e)
+                logging.info(f"Exception occured while processing file {file} : ", e)
 
         #process end
         end_time = datetime.now()
-        print(f"End Time : {end_time}")
+        logging.info(f"End Time : {end_time}")
 
-        print(f"[INFO] Processing started at {start_time} and finished at {end_time}, (Duration: {end_time - start_time})")
+        logging.info(f"[INFO] Processing started at {start_time} and finished at {end_time}, (Duration: {end_time - start_time})")
         
         db_count = count_records(conn)
 
-        print(f"Total number of records ingested : {total_rows}")
-        print(f"Total number of records in db : {db_count}")
+        logging.info(f"Total number of records ingested : {total_rows}")
+        logging.info(f"Total number of records in db : {db_count}")
 
     finally:
         if conn:

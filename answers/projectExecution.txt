@@ -1,0 +1,47 @@
+
+Steps to run locally : 
+
+1. Create and activate a python virtual environment
+python -m venv venv
+Linux : source ./venv/bin/activate
+Windows : venv\Scripts\activate
+
+2. Install dependencies:
+navigate to src folder : cd src
+pip install -r requirements.txt
+
+3. Set up PostgreSQL database
+I used pgAdmin4 to develop this project. Ensure PostgreSQL is running locally.
+
+4. Configure DB credentials
+credentials that I've used are as below : 
+'dbname': 'weatherdata',
+'user': 'postgres',
+'password': '12345678',
+'host': 'localhost',
+'port': 5432
+If you are using your custom credentials then make sure to replace the existing credentials with your own credentials
+in src/db.py, src/dataIngestion.py, src/weatherStatistics.py
+
+Note : The required tables and schemas will be auto created once the dataIngestion.py and weatherStatistics.py scripts are run.
+
+5. run the data ingestion script by navigating to the "src" folder and running the following command:
+python dataIngestion.py
+
+6. run the script for data analysis by navigating to the src folder to define schema and populate data for weather aggregration.
+python weatherStatistics.py
+
+7. Once the above steps are completed, now you can run the FastAPI app consisting for two REST endpoints
+Assuming that python packages such as fastapi, pydantic and uvicorn is already installed in the running virtual env, start the deployment server:
+uvicorn main:app --reload
+
+Once the server is up and running, to access the swagger-docs for automatic documentation of the API, visit : http://127.0.0.1:8000/docs
+
+"test_main.py" Api Endpoint tests
+This test script verifies the functionality of the two main REST API endpoints: '/api/weather' and '/api/weather/stats'. 
+It uses FastAPI’s 'TestClient' to simulate POST requests with and without filters such as 'station_id', 'date', and 'year'. 
+The tests ensure that the endpoints return the correct HTTP status codes, expected response structure, and data types. 
+To ensure that the tests perform as expected, please make sure that your local PostgreSQL database contains some sample weather and stats data before running the tests.
+These tests provide a quick way to validate that the API behaves correctly under basic usage scenarios.
+
+

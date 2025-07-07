@@ -1,0 +1,12 @@
+Question : 
+Assume you are asked to get your code running in the cloud using AWS. 
+What tools and AWS services would you use to deploy the API, database, and a scheduled version of your data ingestion code? 
+Write up a description of your approach.
+
+Answer : 
+To deploy this project in AWS, I would containerize the FastAPI application using Docker and run it on Amazon ECS with Fargate, which provides serverless container orchestration. 
+The PostgreSQL database would be hosted on Amazon RDS. 
+For the ingestion pipeline, I would use a scheduled AWS Lambda function, triggered via Amazon EventBridge, to process weather data files stored in Amazon S3. 
+Secrets such as database credentials would be managed securely with AWS Secrets Manager. 
+Logs and performance metrics would be collected using Amazon CloudWatch for monitoring and debugging. 
+This approach ensures a architecture which is clean, maintains separation of concerns, implements automation for data loading, provides scalability, and has a ease of maintenance in a production-ready cloud environment.
